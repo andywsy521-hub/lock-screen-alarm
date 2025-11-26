@@ -1,4 +1,4 @@
-name: Build Executable
+name: Build Windows Executable
 
 on:
   push:
@@ -6,6 +6,7 @@ on:
       - 'v*'
   release:
     types: [created]
+  workflow_dispatch:  # 允许手动触发
 
 jobs:
   build-windows:
@@ -13,7 +14,7 @@ jobs:
     
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -25,12 +26,21 @@ jobs:
         python -m pip install --upgrade pip
         pip install pyinstaller
         
-    - name: Build executable
+    - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --name "定时活动锁屏闹铃" lock_screen_alarm.py
+        pyinstaller --onefile --windowed --name "LockScreenAlarm" lock_screen_alarm.py
         
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
+    - name: Upload build artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: 定时活动锁屏闹铃
-        path: dist/定时活动锁屏闹铃.exe
+        name: LockScreenAlarm-Windows
+        path: dist/LockScreenAlarm.exe
+        retention-days: 30
+        
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: dist/LockScreenAlarm.exe
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
